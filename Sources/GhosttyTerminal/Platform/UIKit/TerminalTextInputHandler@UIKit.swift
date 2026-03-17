@@ -10,16 +10,14 @@
     @MainActor
     final class TerminalTextInputHandler {
         private weak var view: UITerminalView?
-        private(set) var markedText: String?
-        private var selectedRange = NSRange(location: 0, length: 0)
+        private var markedTextState = TerminalMarkedTextState()
 
         var hasMarkedText: Bool {
-            guard let markedText else { return false }
-            return !markedText.isEmpty
+            markedTextState.hasMarkedText
         }
 
         var documentLength: Int {
-            markedText?.utf16.count ?? 0
+            markedTextState.documentLength
         }
 
         init(view: UITerminalView) {
@@ -37,8 +35,7 @@
                 view.inputDelegate?.selectionWillChange(view)
             }
 
-            markedText = nil
-            selectedRange = NSRange(location: 0, length: 0)
+            markedTextState.clear()
             view.surface?.preedit("")
             view.surface?.sendText(text)
 
@@ -54,10 +51,9 @@
             view.inputDelegate?.textWillChange(view)
             view.inputDelegate?.selectionWillChange(view)
 
-            markedText = text
-            self.selectedRange = clampedSelectedRange(selectedRange, in: text)
+            markedTextState.setMarkedText(text, selectedRange: selectedRange)
 
-            if let text, !text.isEmpty {
+            if let text = markedTextState.text, !text.isEmpty {
                 view.surface?.preedit(text)
             } else {
                 view.surface?.preedit("")
@@ -70,15 +66,14 @@
         func unmarkText() {
             guard let view else { return }
             let shouldNotifySelectionChange = shouldNotifySelectionChange
-            let committedText = markedText
+            let committedText = markedTextState.text
 
             view.inputDelegate?.textWillChange(view)
             if shouldNotifySelectionChange {
                 view.inputDelegate?.selectionWillChange(view)
             }
 
-            markedText = nil
-            selectedRange = NSRange(location: 0, length: 0)
+            markedTextState.clear()
             if let committedText, !committedText.isEmpty {
                 view.surface?.sendText(committedText)
             }
@@ -91,67 +86,82 @@
         }
 
         func markedTextRange() -> TerminalTextRange? {
-            guard let markedText, !markedText.isEmpty else { return nil }
-            return TerminalTextRange(location: 0, length: markedText.utf16.count)
+            guard markedTextState.hasMarkedText else { return nil }
+            return TerminalTextRange(
+                location: markedTextState.markedRange.location,
+                length: markedTextState.markedRange.length
+            )
         }
 
         func selectedTextRange() -> TerminalTextRange {
             TerminalTextRange(
-                location: selectedRange.location,
-                length: selectedRange.length
+                location: markedTextState.selectedRange.location,
+                length: markedTextState.selectedRange.length
             )
         }
 
         func setSelectedTextRange(_ range: UITextRange?) {
             let updatedRange = if let range = range as? TerminalTextRange {
-                clampedSelectedRange(
-                    NSRange(
-                        location: range.location,
-                        length: range.length
-                    ),
-                    in: markedText
+                NSRange(
+                    location: range.location,
+                    length: range.length
                 )
             } else {
                 NSRange(location: 0, length: 0)
             }
-            guard selectedRange != updatedRange else { return }
-            updateSelectedRange(updatedRange)
+            let clampedRange = clampedSelectedRange(updatedRange)
+            guard markedTextState.selectedRange != clampedRange else { return }
+            notifySelectionWillChange()
+            markedTextState.setMarkedText(markedTextState.text, selectedRange: clampedRange)
+            notifySelectionDidChange()
         }
 
         func text(in range: TerminalTextRange) -> String? {
-            guard let markedText else {
-                return range.isEmpty ? "" : nil
-            }
-
-            let nsRange = NSRange(
+            markedTextState.text(in: NSRange(
                 location: range.location,
                 length: range.length
-            )
-            let nsText = markedText as NSString
-            guard nsRange.location >= 0, nsRange.length >= 0 else { return nil }
-            guard nsRange.location + nsRange.length <= nsText.length else { return nil }
-            return nsText.substring(with: nsRange)
+            ))
+        }
+
+        func deleteBackwardInMarkedText() -> Bool {
+            guard let view else { return false }
+            guard markedTextState.hasMarkedText else { return false }
+            let shouldNotifySelectionChange = shouldNotifySelectionChange
+            view.inputDelegate?.textWillChange(view)
+            if shouldNotifySelectionChange {
+                view.inputDelegate?.selectionWillChange(view)
+            }
+
+            _ = markedTextState.deleteBackward()
+            view.surface?.preedit(markedTextState.text ?? "")
+
+            if shouldNotifySelectionChange {
+                view.inputDelegate?.selectionDidChange(view)
+            }
+            view.inputDelegate?.textDidChange(view)
+            return true
         }
 
         private var shouldNotifySelectionChange: Bool {
-            hasMarkedText || selectedRange.location != 0 || selectedRange.length != 0
+            hasMarkedText
+                || markedTextState.selectedRange.location != 0
+                || markedTextState.selectedRange.length != 0
         }
 
-        private func clampedSelectedRange(
-            _ range: NSRange,
-            in text: String?
-        ) -> NSRange {
-            let length = text?.utf16.count ?? 0
+        private func clampedSelectedRange(_ range: NSRange) -> NSRange {
+            let length = markedTextState.documentLength
             let location = min(max(range.location, 0), length)
             let end = min(max(range.location + range.length, location), length)
             return NSRange(location: location, length: end - location)
         }
 
-        private func updateSelectedRange(_ range: NSRange) {
+        private func notifySelectionWillChange() {
             if let view {
                 view.inputDelegate?.selectionWillChange(view)
             }
-            selectedRange = range
+        }
+
+        private func notifySelectionDidChange() {
             if let view {
                 view.inputDelegate?.selectionDidChange(view)
             }

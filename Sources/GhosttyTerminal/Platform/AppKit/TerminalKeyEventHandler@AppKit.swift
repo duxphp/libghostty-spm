@@ -37,6 +37,10 @@
             inputMethodHandler?.startCollectingText()
             view.interpretKeyEvents([event])
 
+            if inputMethodHandler?.consumeHandledTextCommand() == true {
+                return
+            }
+
             if let collected = inputMethodHandler?.finishCollectingText() {
                 var input = event.buildKeyInput(action: action)
                 for text in collected {
@@ -50,6 +54,10 @@
 
             guard inputMethodHandler?.hasMarkedText != true else { return }
             sendKeyEvent(for: event, action: action, to: surface, includeText: true)
+        }
+
+        func handleTextCommand(_ selector: Selector) {
+            inputMethodHandler?.handleCommand(selector)
         }
 
         func handleKeyUp(with event: NSEvent) {
@@ -108,6 +116,9 @@
 
         private func handleDirectInputIfNeeded(_ event: NSEvent) -> Bool {
             guard let view else { return false }
+            // During IME composition, AppKit needs to keep ownership of editing
+            // commands so marked text can shrink, cancel, and move correctly.
+            guard inputMethodHandler?.hasMarkedText != true else { return false }
             guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty else {
                 return false
             }

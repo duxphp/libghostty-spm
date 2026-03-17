@@ -29,7 +29,8 @@
         }
 
         public func selectedRange() -> NSRange {
-            NSRange(location: NSNotFound, length: 0)
+            inputHandler?.inputMethodHandler?.currentSelectedRange()
+                ?? NSRange(location: NSNotFound, length: 0)
         }
 
         public func markedRange() -> NSRange {

@@ -22,7 +22,9 @@
             inputHandler?.handleFlagsChanged(with: event)
         }
 
-        override func doCommand(by _: Selector) {}
+        override func doCommand(by selector: Selector) {
+            inputHandler?.handleTextCommand(selector)
+        }
 
         internal func mousePoint(from event: NSEvent) -> (x: CGFloat, y: CGFloat) {
             let point = convert(event.locationInWindow, from: nil)

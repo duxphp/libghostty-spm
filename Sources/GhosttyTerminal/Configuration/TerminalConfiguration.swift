@@ -339,9 +339,9 @@ public struct TerminalConfiguration: Sendable, Hashable {
         builder.withCursorStyle(.block)
         builder.withCursorStyleBlink(true)
         #if os(iOS)
-        builder.withFontSize(10)
+            builder.withFontSize(10)
         #else
-        builder.withFontSize(14)
+            builder.withFontSize(14)
         #endif
         builder.withFontThicken(true)
     }

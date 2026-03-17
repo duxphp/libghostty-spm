@@ -56,6 +56,11 @@
         }
 
         public func deleteBackward() {
+            if inputHandler.deleteBackwardInMarkedText() {
+                hardwareKeyHandled = false
+                return
+            }
+
             guard !hardwareKeyHandled else {
                 hardwareKeyHandled = false
                 return

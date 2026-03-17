@@ -139,6 +139,9 @@
             isCommandModified: Bool,
             filteredModifierFlags: UIKeyModifierFlags
         ) -> Bool {
+            // When IME composition is active, UIKit must own editing keys such as
+            // backspace and arrows so candidate text stays in sync.
+            guard !inputHandler.hasMarkedText else { return false }
             guard !isCommandModified else { return false }
             guard filteredModifierFlags.intersection([.alternate, .control]).isEmpty else {
                 return false
