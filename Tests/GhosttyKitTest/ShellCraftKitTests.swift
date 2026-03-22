@@ -260,7 +260,7 @@ struct ShellCraftKitTests {
 
     @Test
     func utf8IncrementalPreservesValidTextAfterIllegalByte() {
-        let input = Data([0xFF, 0x68, 0x65, 0x6C, 0x6C, 0x6F])  // 0xFF + "hello"
+        let input = Data([0xFF, 0x68, 0x65, 0x6C, 0x6C, 0x6F]) // 0xFF + "hello"
         let (text, leftover) = decodeUTF8Incrementally(input)
         #expect(text == "hello")
         #expect(leftover.isEmpty)

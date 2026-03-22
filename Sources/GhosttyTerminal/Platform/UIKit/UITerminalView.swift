@@ -30,6 +30,11 @@
         lazy var inputHandler = TerminalTextInputHandler(view: self)
         weak var _inputDelegate: (any UITextInputDelegate)?
 
+        #if !targetEnvironment(macCatalyst)
+            lazy var terminalInputAccessory = TerminalInputAccessoryView(terminalView: self)
+            let stickyModifiers = TerminalStickyModifierState()
+        #endif
+
         public weak var delegate: (any TerminalSurfaceViewDelegate)? {
             get { core.delegate }
             set { core.delegate = newValue }

@@ -56,6 +56,14 @@
                 hardwareKeyHandled = false
                 return
             }
+
+            #if !targetEnvironment(macCatalyst)
+                if stickyModifiers.hasActiveModifiers {
+                    _ = handleStickyTextInput(text)
+                    return
+                }
+            #endif
+
             inputHandler.insertText(text)
         }
 
