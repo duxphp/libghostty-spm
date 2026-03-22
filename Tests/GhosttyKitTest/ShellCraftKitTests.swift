@@ -290,4 +290,22 @@ struct ShellCraftKitTests {
         #expect(text == "e\u{0301}")
         #expect(leftover.isEmpty)
     }
+
+    @Test
+    func utf8IncrementalSkipsLeadWithNonContinuationTail() {
+        // 0xE4 is 3-byte lead, but 0x41 is ASCII — not a valid continuation
+        let input = Data([0xE4, 0x41])
+        let (text, leftover) = decodeUTF8Incrementally(input)
+        #expect(text == "A")
+        #expect(leftover.isEmpty)
+    }
+
+    @Test
+    func utf8IncrementalSkipsFourByteLeadWithInvalidTail() {
+        // 0xF0 is 4-byte lead, but 0x41/0x42 are ASCII
+        let input = Data([0xF0, 0x41, 0x42])
+        let (text, leftover) = decodeUTF8Incrementally(input)
+        #expect(text == "AB")
+        #expect(leftover.isEmpty)
+    }
 }

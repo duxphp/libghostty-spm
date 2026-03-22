@@ -646,7 +646,21 @@ func decodeUTF8Incrementally(_ data: Data) -> (String, Data) {
 
         let remaining = data.endIndex - i
         if remaining < sequenceLength {
-            break
+            // Verify trailing bytes are valid continuations (0x80-0xBF).
+            // If any trailing byte is NOT a continuation, the sequence can
+            // never be completed — skip the lead byte and keep scanning.
+            var validPrefix = true
+            for j in (i + 1) ..< data.endIndex {
+                if data[j] & 0xC0 != 0x80 {
+                    validPrefix = false
+                    break
+                }
+            }
+            if validPrefix {
+                break
+            }
+            i += 1
+            continue
         }
 
         let slice = data[i ..< i + sequenceLength]
