@@ -208,7 +208,6 @@
                 stopMomentumScrolling()
 
             case .changed:
-                touchDidScrollDuringCurrentTouch = true
                 let translation = gesture.translation(in: self)
                 gesture.setTranslation(.zero, in: self)
                 TerminalDebugLog.log(
