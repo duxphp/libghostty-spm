@@ -242,29 +242,29 @@
         }
 
         var filteredCharacters: String? {
-            guard let characters else { return nil }
-            guard characters.count == 1,
-                  let scalar = characters.unicodeScalars.first
+            guard let filtered = TerminalInputText.filteredFunctionKeyText(characters) else {
+                return nil
+            }
+            guard filtered.count == 1,
+                  let scalar = filtered.unicodeScalars.first
             else {
-                return characters
+                return filtered
             }
 
             // macOS encodes function keys as Private Use Area scalars —
             // these have no printable representation.
-            if TerminalInputText.isPrivateUseFunctionKey(scalar) {
-                return nil
-            }
-
             // When the control modifier produces a raw control character,
             // re-derive printable text without the control modifier so
             // Ghostty can map the physical key correctly.
             if scalar.isASCIIControl {
                 var flags = modifierFlags
                 flags.remove(.control)
-                return self.characters(byApplyingModifiers: flags)
+                return TerminalInputText.filteredFunctionKeyText(
+                    self.characters(byApplyingModifiers: flags)
+                )
             }
 
-            return characters
+            return filtered
         }
     }
 

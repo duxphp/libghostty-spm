@@ -53,13 +53,19 @@
                 return
             }
 
+            guard let sanitizedText = TerminalInputText.filteredFunctionKeyText(text),
+                  !sanitizedText.isEmpty
+            else {
+                return
+            }
+
             markedTextState.clear()
             view?.surface?.preedit("")
 
             if accumulatedTexts != nil {
-                accumulatedTexts?.append(text)
+                accumulatedTexts?.append(sanitizedText)
             } else {
-                view?.surface?.sendText(text)
+                view?.surface?.sendText(sanitizedText)
             }
         }
 
@@ -76,12 +82,13 @@
                 return
             }
 
-            markedTextState.setMarkedText(text, selectedRange: selectedRange)
+            let sanitizedText = TerminalInputText.filteredFunctionKeyText(text) ?? ""
+            markedTextState.setMarkedText(sanitizedText, selectedRange: selectedRange)
 
-            if text.isEmpty {
+            if sanitizedText.isEmpty {
                 view?.surface?.preedit("")
             } else {
-                view?.surface?.preedit(text)
+                view?.surface?.preedit(sanitizedText)
             }
         }
 

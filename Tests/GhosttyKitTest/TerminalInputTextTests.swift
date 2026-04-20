@@ -13,6 +13,14 @@ struct TerminalInputTextTests {
     }
 
     @Test
+    func filtersUnicodeNoncharactersFromTextPath() {
+        #expect(TerminalInputText.filteredFunctionKeyText("\u{FFFF}") == nil)
+        #expect(TerminalInputText.filteredFunctionKeyText("\u{FFFE}") == nil)
+        #expect(TerminalInputText.filteredFunctionKeyText("打\u{FFFF}撒") == "打撒")
+        #expect(TerminalInputText.filteredFunctionKeyText("abc\u{1FFFF}") == "abc")
+    }
+
+    @Test
     func recognizesPrivateUseFunctionKeyScalars() {
         #expect(TerminalInputText.isPrivateUseFunctionKey("\u{F702}"))
         #expect(TerminalInputText.isPrivateUseFunctionKey("\u{F703}"))
@@ -26,5 +34,14 @@ struct TerminalInputTextTests {
         #expect(TerminalInputText.isUIKitNamedFunctionKey("UIKeyInputDownArrow"))
         #expect(!TerminalInputText.isUIKitNamedFunctionKey("a"))
         #expect(!TerminalInputText.isUIKitNamedFunctionKey("你好"))
+    }
+
+    @Test
+    func recognizesUnicodeNoncharacters() {
+        #expect(TerminalInputText.isUnicodeNoncharacter(UnicodeScalar(0xFFFF)!))
+        #expect(TerminalInputText.isUnicodeNoncharacter(UnicodeScalar(0x1FFFF)!))
+        #expect(TerminalInputText.isUnicodeNoncharacter(UnicodeScalar(0xFDD0)!))
+        #expect(!TerminalInputText.isUnicodeNoncharacter("你".unicodeScalars.first!))
+        #expect(!TerminalInputText.isUnicodeNoncharacter("a".unicodeScalars.first!))
     }
 }
