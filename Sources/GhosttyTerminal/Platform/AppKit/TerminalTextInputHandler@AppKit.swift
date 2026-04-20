@@ -3,6 +3,12 @@
 //  libghostty-spm
 //
 //  Created by Lakr233 on 2026/3/16.
+//  Reference:
+//  - ghostty-org/ghostty
+//  - macos/Sources/Ghostty/Surface View/SurfaceView_AppKit.swift
+//  IME text accumulation intentionally follows Ghostty's AppKit flow:
+//  marked/preedit text is passed through as-is, without extra app-specific
+//  filtering, so composition behavior stays consistent with upstream.
 //
 
 #if canImport(AppKit) && !canImport(UIKit)
@@ -53,19 +59,13 @@
                 return
             }
 
-            guard let sanitizedText = TerminalInputText.filteredFunctionKeyText(text),
-                  !sanitizedText.isEmpty
-            else {
-                return
-            }
-
             markedTextState.clear()
             view?.surface?.preedit("")
 
             if accumulatedTexts != nil {
-                accumulatedTexts?.append(sanitizedText)
+                accumulatedTexts?.append(text)
             } else {
-                view?.surface?.sendText(sanitizedText)
+                view?.surface?.sendText(text)
             }
         }
 
@@ -82,13 +82,12 @@
                 return
             }
 
-            let sanitizedText = TerminalInputText.filteredFunctionKeyText(text) ?? ""
-            markedTextState.setMarkedText(sanitizedText, selectedRange: selectedRange)
+            markedTextState.setMarkedText(text, selectedRange: selectedRange)
 
-            if sanitizedText.isEmpty {
+            if text.isEmpty {
                 view?.surface?.preedit("")
             } else {
-                view?.surface?.preedit(sanitizedText)
+                view?.surface?.preedit(text)
             }
         }
 

@@ -3,6 +3,12 @@
 //  libghostty-spm
 //
 //  Created by Lakr233 on 2026/3/16.
+//  Reference:
+//  - ghostty-org/ghostty
+//  - macos/Sources/Ghostty/Surface View/SurfaceView_AppKit.swift
+//  Translation modifiers, interpretKeyEvents dispatch, and text emission are
+//  kept close to Ghostty's native AppKit implementation to reduce long-term
+//  drift from upstream keyboard/IME semantics.
 //
 
 #if canImport(AppKit) && !canImport(UIKit)
