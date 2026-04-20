@@ -89,7 +89,12 @@
         }
 
         override func doCommand(by selector: Selector) {
-            inputHandler?.handleTextCommand(selector)
+            if let lastPerformKeyEvent,
+               let current = NSApp.currentEvent,
+               lastPerformKeyEvent == current.timestamp
+            {
+                NSApp.sendEvent(current)
+            }
         }
 
         @IBAction func copy(_ sender: Any?) {
